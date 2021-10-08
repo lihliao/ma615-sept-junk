@@ -1,0 +1,65 @@
+---
+title: "Explanation"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(
+    echo = TRUE,
+    comment=NA) 
+```
+
+## Explanation
+
+There are two major script files were used. The first one is wrangling_code.R, the second one is data_visualization_code.R. 
+
+The purpose of wrangling_code.R is to clean and tidy data downloaded from Gapminder and transform it to tidy format. The major packages used in the script is tidyr, tidyverse, dplyr. The logic of this script is first import two csv files downloaded from Gapminder, worthnoting that when import data, fileEnoding command was used, because in the file there are byte order mark (or BOM), which text editor might interpret it incorrectly. Then pivot_longer command is used to reshape both data from wide to long. Next gsub command was used to remove X before year numbers. These operations were performed on both data. The last step is use full_join from dyplr to have full merge, keep observations from both dataframe, therefore, it can be freely filtered later and not lose out any data points when merging. The merged dataframe is agg_df, which includes both indicators, country, and year. 
+
+The purpose of data_visualization_code.R is to write a customized function, which takes in data provided and output ideal ggplot. The major package is ggplot2. The plot will be returned from this function is scatterplot. 
+
+Then in markdown, there are 3 additional chucnks. The first one is data_clean chucnk. This chunck further clean data. In income var, there are observations that have unit as "k" to represent 1000. To remove it, "k" need to be identified then multiple the number by 1000. The command used is parse_number, which need to be used with charaters. Therefore, the income var was converted to charaters first, and CO2 emissions was converted to numeric. 
+
+The second and third chucks are plot chucnks, for 2 subgroups. The first subgroup is for Germany, the second subgroup is China. Both subgroup's time period is filter out to be between 1950 and 2017. Graph title, x-axis title, and y-axis title are also added. The procedure and codes for the two graphs are the same logic. 
+
+```{r data, echo = T, warning = F}
+source("wrangling_code.R", echo = T)
+```
+
+```{r plotfunc, echo = T, warning = F}
+source("visualization_function.R", echo = T, prompt.echo = "", spaced = F)
+```
+
+```{r data_clean, cache = TRUE, dependson = "agg_df", echo = T, warning = F, include=TRUE}
+df_clean <- agg_df %>%
+  mutate(income_capita = as.character(income_capita)) %>% 
+  mutate(co2_capita = as.numeric(co2_capita)) %>% 
+  mutate(income_capita_k <- case_when(str_detect(income_capita, 'k') ~ parse_number(income_capita)*1e3,
+                                      TRUE ~ parse_number(income_capita))) %>% 
+  select(., c(1,2,4,5)) %>% 
+  rename(., income_capita = 4)
+```
+
+```{r plot, cache=TRUE, dependson="df_clean", echo=T, warning=F}
+df_clean_1 <- df_clean %>%
+  filter(., year >= 1950 & year <= 2017 & country == "Germany")
+
+ggfun(df_clean_1, df_clean_1$income_capita, df_clean_1$co2_capita)+
+  ggtitle("Income per capita vs. CO2 emission per person, Germany, 1950 - 2017")+
+  xlab('Income per person (GDP/capita, PPP$ inflation-adjusted)')+
+  ylab("CO2 emissions (tonnes per person)") 
+```
+
+
+```{r plot2, cache=TRUE, dependson="df_clean", warning=F, echo=T, include=T}
+df_clean_2 <- df_clean %>%
+  filter(., year >= 1950 & year <= 2017 & country == "China") 
+
+ggfun(df_clean_2, df_clean_2$income_capita, df_clean_2$co2_capita)+
+  ggtitle("Income per capita vs. CO2 emission per person, China, 1950 - 2017")+
+  xlab('Income per person (GDP/capita, PPP$ inflation-adjusted)')+
+  ylab("CO2 emissions (tonnes per person)")
+
+```

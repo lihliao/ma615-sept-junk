@@ -1,0 +1,61 @@
+---
+title: "Presentation"
+output: html_document
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(
+    echo = TRUE,
+    comment=NA) 
+```
+
+## Presentation and comparison
+
+The data used for this presentation includes two indicators, which are Income per person (GDP/capita, PPP$ inflation-adjusted) and CO2 emissions (tonnes per person). The major goal for is to explore if income increase is positively related to CO2 emissions increase. The data selected covers time period from 1950 to 2017 (the latest CO2 emissions data avaialble from Gapminder). Two countries were selected specifically to look into for comparison, Germany and China. Germany is known as the active leading country for international engagement for CO2 emissions cuts and has been taking proactive reactions toward CO2 emissions cut target. China is the country that experienced the fastest economic growth in the past several decades. 
+
+According to the two scatte plots, there are three interesting observations. 
+
+* First, the income increase is not related to CO2 emissions increase. According to the graph for Germany, after the CO2 emission reached the peak, the CO2 emissions steadily decrease while income per capita increase. 
+
+* Second, the sharp increase in income might lead to sharp increase in CO2 emissions. According to graph for China, there was a long period where a sharp increase in both income and CO2 emissions were observed.
+
+* Third, when comparing the CO2 emissions per capita in Germany and China, despite of 4 tonnes were cut per person in Germany, the lowest point of CO2 emission per person in Germany is still higher than the amount in China. The reason could be that China is a population intense country, and per capital CO2 emision will be lower when comparing to Germany.  
+```{r data, echo = F, warning = F, include = F}
+source("wrangling_code.R", echo = T, prompt.echo = "", spaced = F)
+```
+
+```{r plotfunc, echo = F, warning = F, include = F}
+source("visualization_function.R", echo = T, prompt.echo = "", spaced = F)
+```
+
+```{r data_clean, cache = TRUE, dependson = "agg_df", warning = F, echo = F, include = F}
+df_clean <- agg_df %>%
+  mutate(income_capita = as.character(income_capita)) %>% 
+  mutate(co2_capita = as.numeric(co2_capita)) %>%
+  mutate(income_capita_k <- case_when(str_detect(income_capita, 'k') ~ parse_number(income_capita)*1e3,
+                                      TRUE ~ parse_number(income_capita))) %>% 
+  select(., c(1,2,4,5)) %>% 
+  rename(., income_capita = 4)
+```
+
+```{r plot, cache=TRUE, dependson="df_clean", warning=F, echo=F, include=T}
+df_clean_1 <- df_clean %>%
+  filter(., year >= 1950 & year <= 2017 & country == "Germany") 
+
+ggfun(df_clean_1, df_clean_1$income_capita, df_clean_1$co2_capita)+
+  ggtitle("Income per capita vs. CO2 emission per person, Germany, 1950 - 2017")+
+  xlab('Income per person (GDP/capita, PPP$ inflation-adjusted)')+
+  ylab("CO2 emissions (tonnes per person)")
+
+```
+
+```{r plot2, cache=TRUE, dependson="df_clean", warning=F, echo=F, include=T}
+df_clean_2 <- df_clean %>%
+  filter(., year >= 1950 & year <= 2017 & country == "China") 
+
+ggfun(df_clean_2, df_clean_2$income_capita, df_clean_2$co2_capita)+
+  ggtitle("Income per capita vs. CO2 emission per person, China, 1950 - 2017")+
+  xlab('Income per person (GDP/capita, PPP$ inflation-adjusted)')+
+  ylab("CO2 emissions (tonnes per person)")
+
+```
